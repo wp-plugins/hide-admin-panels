@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Hide Admin Panels
-Plugin URI: http://www.businessxpand.com
+Plugin URI: http://www.wpxpand.com
 Description: Allows you to hide admin panels for a specific user and/or role.
-Author: Business Xpand
+Author: WPXpand
 Version: 0.9.8
-Author URI: http://www.businessxpand.com
+Author URI: http://www.wpxpand.com
 */
 //error_reporting(E_ALL);
 //ini_set('display_errors', '1');
@@ -24,6 +24,7 @@ class HideAdminPanels
 {
     var $message;
     var $ozhActive;
+    var $bxNews;
 
     /**
      * Construct the plugin
@@ -43,6 +44,8 @@ class HideAdminPanels
             add_action( 'admin_menu', array( &$this, 'adminMenu' ) );
             add_action( 'admin_head', array( &$this, 'adminHead' ), 1000 );
             add_action( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( &$this, 'pluginActionLinks' ), 10, 4 );
+            if ( !class_exists( 'BxNews' ) ) include_once( dirname( __FILE__ ) . '/class-bx-news.php' );
+            $this->bxNews = new BxNews( 'http://www.wpxpand.com/feeds/wordpress-plugins/', false );
         }
     }
 
@@ -289,7 +292,11 @@ class HideAdminPanels
         /* ]]> */
         </script>
     </div>
-</div><?php
+</div>
+<div class="wrap">
+    <?php $this->bxNews->getFeed( '', array( 'http://wordpress.org/extend/plugins/hide-admin-panels/' ) ); ?>
+</div>
+<?php
     }
 }
 new HideAdminPanels;
