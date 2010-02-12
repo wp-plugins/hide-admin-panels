@@ -2,9 +2,9 @@
 /*
 Plugin Name: Hide Admin Panels
 Plugin URI: http://www.businessxpand.com
-Description: Allows you to hide admin panels for a specific user
+Description: Allows you to hide admin panels for a specific user and/or role.
 Author: Business Xpand
-Version: 0.9
+Version: 0.9.8
 Author URI: http://www.businessxpand.com
 */
 //error_reporting(E_ALL);
@@ -16,19 +16,20 @@ Author URI: http://www.businessxpand.com
  * @copyright 2009 Business Xpand
  * @license GPL v2.0
  * @author Steven Raynham
- * @version 0.9
+ * @version 0.9.8
  * @link http://www.businessxpand.com/
  * @since File available since Release 0.9
  */
 class HideAdminPanels
 {
     var $message;
+    var $ozhActive;
 
     /**
      * Construct the plugin
      *
      * @author Steven Raynham
-     * @since 0.9
+     * @since 0.9.8
      *
      * @param void
      * @return null
@@ -36,17 +37,36 @@ class HideAdminPanels
     function HideAdminPanels()
     {
         if ( is_admin() ) {
+            $otherPlugins = get_option( 'active_plugins' );
+            if ( in_array('ozh-admin-drop-down-menu/wp_ozh_adminmenu.php', $otherPlugins ) ) $this->ozhActive = true; else $this->ozhActive = false;
             add_action( 'init', array( &$this,'adminInit' ) );
             add_action( 'admin_menu', array( &$this, 'adminMenu' ) );
-            add_action( 'admin_head', array( &$this, 'adminHead' ) );
+            add_action( 'admin_head', array( &$this, 'adminHead' ), 1000 );
+            add_action( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( &$this, 'pluginActionLinks' ), 10, 4 );
         }
     }
+
+   /**
+     * Register the settings link on the plugin screen
+     *
+     * @author Steven Raynham
+     * @since 0.9.8
+     *
+     * @param void
+     * @return null
+     */
+    function pluginActionLinks( $links )
+    {
+        $settingsLink = '<a href="options-general.php?page=' . basename( __FILE__ ) . '">' . __('Settings') . '</a>';
+		array_unshift( $links, $settingsLink );
+		return $links;
+	}
 
    /**
      * Initiate admin
      *
      * @author Steven Raynham
-     * @since 0.9
+     * @since 0.9.8
      *
      * @param void
      * @return null
@@ -56,25 +76,53 @@ class HideAdminPanels
         wp_enqueue_script( 'jquery' );
         $this->message = '';
         if ( isset( $_POST['admin-panel-user'] ) ) $userId = $_POST['admin-panel-user']; else $userId = 1;
-        if ( !( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) ) $adminPanelOptions = array();
-        if ( isset( $_POST['action'] ) && isset( $_POST['admin-panels-form'] ) ) {
-            check_admin_referer( 'admin-panels-nonce', 'admin-panels-nonce' );
-            switch ( $_POST['action'] ) {
-                case 'save':
-                    if ( isset( $_POST['doaction_save'] ) ) {
-                        delete_usermeta( $userId, 'admin-panels' );
-                        $adminPanelOptions = array();
-                        if ( isset( $_POST['id_value'] ) && ( count( $_POST['id_value'] ) > 0 ) ) {
-                            foreach ( $_POST['id_value'] as $name => $value ) {
-                                if ( !empty( $value ) ) {
-                                    $adminPanelOptions[$name] = $value;
+        if ( substr( $userId, 0, 4 ) == 'wpr-' ) {
+            if ( !( $adminPanelOptions = get_option( 'hap_' . $userId ) ) ) $adminPanelOptions = array();
+            if ( isset( $_POST['action'] ) && isset( $_POST['admin-panels-form'] ) ) {
+                check_admin_referer( 'admin-panels-nonce', 'admin-panels-nonce' );
+                switch ( $_POST['action'] ) {
+                    case 'save':
+                        if ( isset( $_POST['doaction_save'] ) ) {
+                            delete_option( 'hap_' . $userId );
+                            $adminPanelOptions = array();
+                            if ( isset( $_POST['id_value'] ) && ( count( $_POST['id_value'] ) > 0 ) ) {
+                                foreach ( $_POST['id_value'] as $name => $value ) {
+                                    if ( !empty( $value ) ) {
+                                        $adminPanelOptions[$name] = $value;
+                                    }
+                                }
+                                if ( get_option( 'hap_' . $userId ) ) {
+                                    update_option( 'hap_' . $userId, $adminPanelOptions );
+                                } else {
+                                    add_option( 'hap_' . $userId, $adminPanelOptions );
                                 }
                             }
-                            update_usermeta( $userId, 'admin-panels', $adminPanelOptions );
-                            $this->message .= '<p>Admin panel options saved.</p>';
                         }
-                    }
-                    break;
+                        $this->message .= '<p>Admin panel options saved.</p>';
+                        break;
+                }
+            }
+        } else {
+            if ( !( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) ) $adminPanelOptions = array();
+            if ( isset( $_POST['action'] ) && isset( $_POST['admin-panels-form'] ) ) {
+                check_admin_referer( 'admin-panels-nonce', 'admin-panels-nonce' );
+                switch ( $_POST['action'] ) {
+                    case 'save':
+                        if ( isset( $_POST['doaction_save'] ) ) {
+                            delete_usermeta( $userId, 'admin-panels' );
+                            $adminPanelOptions = array();
+                            if ( isset( $_POST['id_value'] ) && ( count( $_POST['id_value'] ) > 0 ) ) {
+                                foreach ( $_POST['id_value'] as $name => $value ) {
+                                    if ( !empty( $value ) ) {
+                                        $adminPanelOptions[$name] = $value;
+                                    }
+                                }
+                                update_usermeta( $userId, 'admin-panels', $adminPanelOptions );
+                            }
+                        }
+                        $this->message .= '<p>Admin panel options saved.</p>';
+                        break;
+                }
             }
         }
     }
@@ -90,34 +138,58 @@ class HideAdminPanels
      */
     function adminMenu()
     {
-        add_options_page( __( 'Admin Panels' ), __( 'Admin Panels' ), 'level_7', basename(__FILE__), array( &$this,'optionsPage' ) );
+        add_options_page( __( 'Admin Panels' ), __( 'Admin Panels' ), 'level_7', basename(__FILE__), array( &$this, 'optionsPage' ) );
     }
 
    /**
      * Add admin header style
      *
      * @author Steven Raynham
-     * @since 0.9
+     * @since 0.9.8
      *
      * @param void
      * @return null
      */
     function adminHead()
     {
+        $userRoles = wp_get_current_user()->roles;
+        foreach ( $userRoles as $userRole ) {
+            if ( $adminPanelOptions = get_option( 'hap_wpr-' . $userRole ) ) {
+                foreach ( $adminPanelOptions as $name => $value ) {
+                    if ( is_numeric( $value ) ) {
+                        $value = $name;
+                    }
+                    $value = str_replace( "/", "\/", $value );
+                    $css = ( $this->ozhActive ? '#ozhmenu ' : '' ) . 'li#' . $value . '{ display:none; }';
+                    $cssArray[$css] = '';
+                }
+            }
+        }
         $userId = wp_get_current_user()->ID;
-        if ( !( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) ) $adminPanelOptions = array();
-?><style>
-<?php foreach ( $adminPanelOptions as $name => $value ) { ?>
-    #<?php echo $name; ?> { display:none; }
-<?php } ?>
-</style><?php
+        if ( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) {
+            foreach ( $adminPanelOptions as $name => $value ) {
+                if ( is_numeric( $value ) ) {
+                    $value = $name;
+                }
+                $value = str_replace( "/", "\/", $value );
+                $css = ( $this->ozhActive ? '#ozhmenu ' : '' ) . 'li#' . $value . '{ display:none; }';
+                $cssArray[$css] = '';
+            }
+        }
+        if ( isset( $cssArray ) && ( count( $cssArray ) > 0 ) ) {
+            echo '<style type="text/css">' . "\r\n";
+            foreach ( $cssArray as $css => $dummy ) {
+                echo $css . "\r\n";
+            }
+            echo '</style>' . "\r\n";
+        }
     }
 
     /**
      * Options page
      *
      * @author Steven Raynham
-     * @since 0.9
+     * @since 0.9.8
      *
      * @param void
      * @return null
@@ -134,14 +206,28 @@ class HideAdminPanels
                 $users .= '<option value="' . $result->ID . '"' . ( ( $result->ID == $userId ) ? ' selected="selected"' : '' ) . '>' . $result->display_name . '</option>';
             }
         }
-        if ( !( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) ) $adminPanelOptions = array();
+        if ( $roles = get_option( 'wp_user_roles' ) ) {
+            $users .= '<option>&nbsp;</option>';
+            foreach ( $roles as $roleName => $roleParameters ) {
+                if ( $roleName != 'administrator' )
+                    $users .= '<option value="wpr-' . $roleName . '"' . ( ( $userId == ( 'wpr-' . $roleName ) ) ? ' selected="selected"' : '' ) . '>' . $roleName . '</option>';
+            }
+        }
+
+        if ( substr( $userId, 0, 4 ) == 'wpr-' ) {
+            if ( !( $adminPanelOptions = get_option( 'hap_' . $userId ) ) ) $adminPanelOptions = array();
+        } else {
+            if ( !( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) ) $adminPanelOptions = array();
+        }
 ?><div class='wrap'>
     <h2><?php _e( 'Hide Admin Panels' ); ?></h2>
-    <?php if ( !empty( $message ) ) { ?><div id="message" class="updated fade"><p><strong><?php _e( $message ); ?></strong></p></div><?php } ?>
+    <?php if ( !empty( $this->message ) ) { ?><div id="message" class="updated fade"><p><strong><?php _e( $this->message ); ?></strong></p></div><?php } ?>
     <h3><?php _e( 'Instructions' ); ?></h3>
-    <ul>
-        <li><?php _e( 'Select the admin menu sections you wish to hide, simple as that.' ); ?></li>
-    </ul>
+    <ol>
+        <li><?php _e( 'Select the user or the user role you wish to effect.' ); ?></li>
+        <li><?php _e( 'Select the admin menu sections you wish to hide.' ); ?></li>
+    </ol>
+    <em><?php _e( 'Please note that you will not be able to hide the settings panel for the current user, or change the settings for the administrator role. This is to prevent mistakes with this plugin that prevent you from being able to fix them.' ); ?></em>
     <hr/>
     <div>
         <form method="post">
@@ -156,7 +242,7 @@ class HideAdminPanels
                             <label>Select user</label>:
                         </td>
                         <td>
-                            <select name="admin-panel-user" onchange="submit(this);">
+                            <select name="admin-panel-user" onchange="submit(this);" id="admin-panel-user">
                                 <?php echo $users; ?>
                             </select>
                         </td>
@@ -164,8 +250,9 @@ class HideAdminPanels
                     <?php } ?>
                     <?php $jsAdminPanelArray = ''; ?>
                     <?php foreach ( $adminPanelOptions as $name => $value ) { ?>
-                    <?php $jsAdminPanelArray .= "excludeTags['" . $name . "'] = 1;"; ?>
-                    <tr valign="top"><td align="right"><input type="checkbox" name="id_value[<?php echo $name; ?>]" value="1"<?php echo ( ($value == '1') ? 'checked="checked"' : '' ); ?>/></td><td><?php echo $name; ?></td></tr>
+                    <?php if ( is_numeric( $value ) ) { $value = $name; } ?>
+                    <?php $jsAdminPanelArray .= "excludeTags['" . $value . "'] = 1;"; ?>
+                    <tr valign="top"><td align="right"><input type="checkbox" name="id_value[<?php echo $name; ?>]" value="<?php echo $value; ?>" checked="checked"/></td><td><?php echo $name; ?></td></tr>
                     <?php } ?>
                 </tbody>
             </table>
@@ -177,14 +264,24 @@ class HideAdminPanels
                 var tags = jQuery('*');
                 var excludeTags = [];
                 var ids = [];
+                var menuText;
                 <?php echo $jsAdminPanelArray; ?>
                 for ( var i in tags ) {
                     var tag = tags[i];
                     if ( tag.id ) {
-                        //ids.push( tag.id );
-                        var tagId = tag.id;
-                        if ( tag.id.search(/menu-/i) > -1 ) {
-                            if ( excludeTags[tag.id] == undefined ) jQuery('#id_list').append( '<tr valign="top"><td align="right"><input type="checkbox" name="id_value[' + tag.id + ']" value="1"/></td><td>' + tag.id + '</td></tr>' );
+                        if ( ( jQuery('#admin-panel-user').val() == '<?php echo wp_get_current_user()->ID; ?>' )
+                            && ( tag.id == '<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>menu-settings' ) )
+                            tag.id = '';
+                        if ( ( tag.id.search(/<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>menu-/i) > -1 ) || ( tag.id.search(/<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>toplevel_page_/i) > -1 ) ) {
+                            if ( tag.id == '<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>menu-plugins' ) {
+                                menuText = 'Plugins';
+                            } else if ( tag.id == '<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>menu-comments' ) {
+                                menuText = 'Comments';
+                            } else {
+                                var escapeTag = tag.id.replace(/\//g,'\\/');
+                                menuText = jQuery('li#' + escapeTag).find('a.menu-top<?php echo ( $this->ozhActive ? ' .full' : '' ); ?>').text();
+                            }
+                            if ( excludeTags[tag.id] == undefined ) jQuery('#id_list').append( '<tr valign="top"><td align="right"><input type="checkbox" name="id_value[' + menuText + ']" value="' + tag.id + '"/></td><td>' + menuText + '</td></tr>' );
                         }
                     }
                 }
@@ -195,4 +292,4 @@ class HideAdminPanels
 </div><?php
     }
 }
-$hideAdminPanels = new HideAdminPanels;
+new HideAdminPanels;
