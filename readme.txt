@@ -2,7 +2,7 @@
 Contributors: businessxpand
 Tags: administration, admin, user, users
 Requires at least: 2.7.1
-Tested up to: 2.8.4
+Tested up to: 2.9.1
 Stable tag: 0.9.8
 
 Allows you to hide admin menus from specific users.
