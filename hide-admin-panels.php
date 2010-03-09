@@ -4,7 +4,7 @@ Plugin Name: Hide Admin Panels
 Plugin URI: http://www.wpxpand.com
 Description: Allows you to hide admin panels for a specific user and/or role.
 Author: WPXpand
-Version: 0.9.8
+Version: 0.9.8.1
 Author URI: http://www.wpxpand.com
 */
 //error_reporting(E_ALL);
@@ -191,15 +191,15 @@ class HideAdminPanels
     /**
      * Options page
      *
-     * @author Steven Raynham
-     * @since 0.9.8
+     * @author Steven Raynham, Marc
+     * @since 0.9.8.1
      *
      * @param void
      * @return null
      */
     function optionsPage()
     {
-        global $wpdb;
+        global $wpdb, $table_prefix;
         $sql = "SELECT `ID`, `display_name` FROM `" . $wpdb->users . "`";
         $results = $wpdb->get_results( $wpdb->prepare( $sql ) );
         $users = '';
@@ -209,7 +209,7 @@ class HideAdminPanels
                 $users .= '<option value="' . $result->ID . '"' . ( ( $result->ID == $userId ) ? ' selected="selected"' : '' ) . '>' . $result->display_name . '</option>';
             }
         }
-        if ( $roles = get_option( 'wp_user_roles' ) ) {
+        if ( $roles = get_option( $table_prefix . 'user_roles' ) ) {
             $users .= '<option>&nbsp;</option>';
             foreach ( $roles as $roleName => $roleParameters ) {
                 if ( $roleName != 'administrator' )

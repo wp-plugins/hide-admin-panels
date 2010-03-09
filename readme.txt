@@ -2,8 +2,8 @@
 Contributors: businessxpand
 Tags: administration, admin, user, users
 Requires at least: 2.7.1
-Tested up to: 2.9.1
-Stable tag: 0.9.8
+Tested up to: 2.9.2
+Stable tag: 0.9.8.1
 
 Allows you to hide admin menus from specific users.
 
@@ -16,6 +16,10 @@ Any of the following can be hidden: posts, media, links, pages, comments, appear
 The plugin is also compatible with [Ozh' Admin Drop Down Menu](http://wordpress.org/extend/plugins/ozh-admin-drop-down-menu/ "Ozh' Admin Drop Down Menu") (v3.3.1) plugin. Please ensure that Ozh' Admin Drop Down Menu plugin is activated before hiding menu options.
 
 Please note that this is only an aestheic effect, if your user has something installed in their browser that allows them to change the CSS of the page they will be able to unhide the menu item. This also does not prevent them from accessing the hidden menu sections directly by web address.
+
+**New features/bug fixes for version 0.9.8.1**
+
+* Custom table prefix now supported for the roles, thanks to Marc.
 
 **New features/bug fixes for version 0.9.8**
 
