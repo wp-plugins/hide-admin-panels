@@ -4,7 +4,7 @@ Plugin Name: Hide Admin Panels
 Plugin URI: http://www.wpxpand.com
 Description: Allows you to hide admin panels for a specific user and/or role.
 Author: WPXpand
-Version: 0.9.8.2
+Version: 0.9.8.3
 Author URI: http://www.wpxpand.com
 */
 //error_reporting(E_ALL);
@@ -16,7 +16,7 @@ Author URI: http://www.wpxpand.com
  * @copyright 2009 Business Xpand
  * @license GPL v2.0
  * @author Steven Raynham
- * @version 0.9.8.2
+ * @version 0.9.8.3
  * @link http://www.businessxpand.com/
  * @since File available since Release 0.9
  */
@@ -148,7 +148,7 @@ class HideAdminPanels
      * Add admin header style
      *
      * @author Steven Raynham
-     * @since 0.9.8.2
+     * @since 0.9.8.3
      *
      * @param void
      * @return null
@@ -163,7 +163,7 @@ class HideAdminPanels
                         $value = $name;
                     }
                     $value = str_replace( "/", "\/", $value );
-                    $css = ( $this->ozhActive ? '#ozhmenu ' : '' ) . 'li#' . $value . '{ display:none; }';
+                    $css = ( $this->ozhActive ? '#ozhmenu ' : '' ) . '#' . $value . ' { display:none !important; }';
                     $cssArray[$css] = '';
                 }
             }
@@ -174,7 +174,7 @@ class HideAdminPanels
                     $value = $name;
                 }
                 $value = str_replace( "/", "\/", $value );
-                $css = ( $this->ozhActive ? '#ozhmenu ' : '' ) . 'li#' . $value . '{ display:none; }';
+                $css = ( $this->ozhActive ? '#ozhmenu ' : '' ) . '#' . $value . ' { display:none !important; }';
                 $cssArray[$css] = '';
             }
         }

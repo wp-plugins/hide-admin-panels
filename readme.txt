@@ -3,7 +3,7 @@ Contributors: businessxpand
 Tags: administration, admin, user, users
 Requires at least: 2.7.1
 Tested up to: 2.9.2
-Stable tag: 0.9.8.2
+Stable tag: 0.9.8.3
 
 Allows you to hide admin menus from specific users.
 
@@ -17,8 +17,9 @@ The plugin is also compatible with [Ozh' Admin Drop Down Menu](http://wordpress.
 
 Please note that this is only an aestheic effect, if your user has something installed in their browser that allows them to change the CSS of the page they will be able to unhide the menu item. This also does not prevent them from accessing the hidden menu sections directly by web address.
 
-**Bug fixes for version 0.9.8.2**
+**Bug fixes for version 0.9.8.3/2**
 
+* It didn't work on IE6, but now it does.
 * Some installations generating an error with wp_get_current_user(), so switched to using the $current_user global variable.
 
 **New features/bug fixes for version 0.9.8.1**
