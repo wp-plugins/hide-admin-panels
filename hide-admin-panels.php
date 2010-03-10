@@ -4,7 +4,7 @@ Plugin Name: Hide Admin Panels
 Plugin URI: http://www.wpxpand.com
 Description: Allows you to hide admin panels for a specific user and/or role.
 Author: WPXpand
-Version: 0.9.8.1
+Version: 0.9.8.2
 Author URI: http://www.wpxpand.com
 */
 //error_reporting(E_ALL);
@@ -16,7 +16,7 @@ Author URI: http://www.wpxpand.com
  * @copyright 2009 Business Xpand
  * @license GPL v2.0
  * @author Steven Raynham
- * @version 0.9.8
+ * @version 0.9.8.2
  * @link http://www.businessxpand.com/
  * @since File available since Release 0.9
  */
@@ -148,15 +148,15 @@ class HideAdminPanels
      * Add admin header style
      *
      * @author Steven Raynham
-     * @since 0.9.8
+     * @since 0.9.8.2
      *
      * @param void
      * @return null
      */
     function adminHead()
     {
-        $userRoles = wp_get_current_user()->roles;
-        foreach ( $userRoles as $userRole ) {
+        global $current_user;
+        foreach ( $current_user->roles as $userRole ) {
             if ( $adminPanelOptions = get_option( 'hap_wpr-' . $userRole ) ) {
                 foreach ( $adminPanelOptions as $name => $value ) {
                     if ( is_numeric( $value ) ) {
@@ -168,8 +168,7 @@ class HideAdminPanels
                 }
             }
         }
-        $userId = wp_get_current_user()->ID;
-        if ( $adminPanelOptions = get_usermeta( $userId, 'admin-panels' ) ) {
+        if ( $adminPanelOptions = get_usermeta( $current_user->ID, 'admin-panels' ) ) {
             foreach ( $adminPanelOptions as $name => $value ) {
                 if ( is_numeric( $value ) ) {
                     $value = $name;
@@ -192,14 +191,14 @@ class HideAdminPanels
      * Options page
      *
      * @author Steven Raynham, Marc
-     * @since 0.9.8.1
+     * @since 0.9.8.2
      *
      * @param void
      * @return null
      */
     function optionsPage()
     {
-        global $wpdb, $table_prefix;
+        global $wpdb, $table_prefix, $current_user;
         $sql = "SELECT `ID`, `display_name` FROM `" . $wpdb->users . "`";
         $results = $wpdb->get_results( $wpdb->prepare( $sql ) );
         $users = '';
@@ -272,7 +271,7 @@ class HideAdminPanels
                 for ( var i in tags ) {
                     var tag = tags[i];
                     if ( tag.id ) {
-                        if ( ( jQuery('#admin-panel-user').val() == '<?php echo wp_get_current_user()->ID; ?>' )
+                        if ( ( jQuery('#admin-panel-user').val() == '<?php echo $current_user->ID; ?>' )
                             && ( tag.id == '<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>menu-settings' ) )
                             tag.id = '';
                         if ( ( tag.id.search(/<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>menu-/i) > -1 ) || ( tag.id.search(/<?php echo ( $this->ozhActive ? 'oam_' : '' ); ?>toplevel_page_/i) > -1 ) ) {
